@@ -24,7 +24,7 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.retrievers.document_compressors import LLMChainExtractor
 from langchain.retrievers import ContextualCompressionRetriever, MultiVectorRetriever
 from langchain.prompts import PromptTemplate
-
+from dotenv import load_dotenv
 # Initial setup
 load_dotenv()
 prompt_template = """
