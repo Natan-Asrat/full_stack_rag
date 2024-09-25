@@ -179,16 +179,26 @@ def extract_pdf(elements, type="propositions"):
 #             chunk_document = Document(page_content=split.page_content, metadata={id_key: unique_id})
 #             vectorstore_elements.append(chunk_document)
 
-def extract_files(doc, extraction_type):
+def extract_files(doc, extraction_type, pdf=False):
     unique_id = str(uuid.uuid4())
-    splits = text_splitter.split_documents(doc)
+    if not pdf:
+        splits = text_splitter.split_documents(doc)
+        for split in splits:
+            split.metadata[id_key] = unique_id
+            docstore_elements.append(split)
 
-    for split in splits:
-        split.metadata[id_key] = unique_id
-        docstore_elements.append(split)
+    else:
+        text = doc.text
+        doc_gen = Document(page_content=text, metadata={id_key: unique_id})
+        splits = [doc_gen]
+        docstore_elements.append(doc_gen)
 
+    
     if extraction_type == "propositions":
-        propositions = get_propositions(doc.page_content)
+        if pdf:
+            propositions = get_propositions(text)
+        else:
+            propositions = get_propositions(doc.page_content)
         for p in propositions:
             for sentence in p.sentences:
                 chunk_summary_document = Document(page_content=sentence, metadata={id_key: unique_id})
@@ -233,7 +243,7 @@ if st.button("Process Files"):
                 if ext == "PDF":
                     # for pdf_element in doc:
                     #     extract_files(pdf_element, extraction_type)
-                    extract_files([doc], extraction_type)
+                    extract_files(doc, extraction_type, pdf=True)
                 else:
                     extract_files(doc, extraction_type)
                     st.write(doc) 
