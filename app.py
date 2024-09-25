@@ -231,8 +231,9 @@ if st.button("Process Files"):
             st.write(f"Loaded {len(docs)} {ext} documents.")
             for doc in docs:
                 if ext == "PDF":
-                    for pdf_element in doc:
-                        extract_files(pdf_element, extraction_type)
+                    # for pdf_element in doc:
+                    #     extract_files(pdf_element, extraction_type)
+                    extract_files(doc, extraction_type)
                 else:
                     extract_files(doc, extraction_type)
                     st.write(doc) 
