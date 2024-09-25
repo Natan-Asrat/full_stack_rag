@@ -1,0 +1,7 @@
+Collecting unstructured.pytesseract
+  Using cached unstructured.pytesseract-0.3.13-py3-none-any.whl.metadata (11 kB)
+Requirement already satisfied: packaging>=21.3 in c:\users\hp\downloads\fullstack_rag\venv\lib\site-packages (from unstructured.pytesseract) (24.1)
+Requirement already satisfied: Pillow>=8.0.0 in c:\users\hp\downloads\fullstack_rag\venv\lib\site-packages (from unstructured.pytesseract) (10.4.0)
+Using cached unstructured.pytesseract-0.3.13-py3-none-any.whl (14 kB)
+Installing collected packages: unstructured.pytesseract
+Successfully installed unstructured.pytesseract-0.3.13
