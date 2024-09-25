@@ -233,7 +233,7 @@ if st.button("Process Files"):
                 if ext == "PDF":
                     # for pdf_element in doc:
                     #     extract_files(pdf_element, extraction_type)
-                    extract_files(doc, extraction_type)
+                    extract_files([doc], extraction_type)
                 else:
                     extract_files(doc, extraction_type)
                     st.write(doc) 
