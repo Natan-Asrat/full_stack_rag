@@ -1,6 +1,8 @@
 streamlit==1.38.0
 langchain-core==0.3.5
 langchain==0.3.0
+protobuf==3.20.3
+pysqlite3-binary==0.5.3.post1
 chromadb==0.5.7
 langchain_groq==0.2.0
 unstructured==0.15.13
