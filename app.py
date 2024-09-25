@@ -19,37 +19,52 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 import uuid
 from transformers import AutoTokenizer, AutoModel
 import torch
-from langchain.schema import Document
-from dotenv import load_dotenv
+from langchain.prompts import PromptTemplate
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.retrievers.document_compressors import LLMChainExtractor
+from langchain.retrievers import ContextualCompressionRetriever, MultiVectorRetriever
+from langchain.prompts import PromptTemplate
 
+# Initial setup
 load_dotenv()
+prompt_template = """
+Use the following context to answer the question at the end. If you don't know the answer, just say that you don't know, dont try to make up an answer.
+<context>
+{context}
+</context>
+Question: {input}
+"""
 
+PROMPT = PromptTemplate(template=prompt_template, input_variables=["context", "input"])
 id_key = "doc_key"
 
-documents=[]
-docstore_elements=[]
+documents = []
+docstore_elements = []
 vectorstore_elements = []
-
 db_multi_vector = None
 retriever_multi_vector = None
 
+# Initialize language model
 llm = ChatGroq()
-obj = hub.pull("wfh/proposal-indexing")
 summarize_chain = load_summarize_chain(llm)
-
+# Cache resource to load model
 @st.cache_resource
 def load_model():
     model_name = "sentence-transformers/all-MiniLM-L6-v2"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModel.from_pretrained(model_name)
     return tokenizer, model
+
 tokenizer, model = load_model()
+
+# Function to get embeddings
 def get_embedding(text):
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
     with torch.no_grad():
         outputs = model(**inputs)
     return outputs.last_hidden_state.mean(dim=1).squeeze().numpy().tolist()
 
+# Custom Embeddings class
 class CustomEmbeddings:
     def embed_documents(self, texts):
         return [get_embedding(chunk.page_content) for chunk in texts]
@@ -59,28 +74,11 @@ class CustomEmbeddings:
         with torch.no_grad():
             outputs = model(**inputs)
         return outputs.last_hidden_state.mean(dim=1).squeeze().numpy().tolist()
+
 embedding_model = CustomEmbeddings()
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=3000, chunk_overlap=200)
 
-
-class Sentences(BaseModel):
-    sentences:  List[str]
-
-extraction_chain = create_extraction_chain_pydantic(pydantic_schema=Sentences, llm=llm) 
-extraction_runnable = obj | llm
-
-# Define your Pydantic model
-class PDFData(BaseModel):
-    title: str
-    content: str
-
-    @validator('title', pre=True)
-    def check_title(cls, value):
-        if not value:
-            raise ValueError('Title cannot be empty')
-        return value
-
-# Function to process PDF files using partition_pdf
+# Function to process PDF files
 def process_pdf(file_path):
     elements = partition_pdf(
         filename=file_path,
@@ -92,7 +90,6 @@ def process_pdf(file_path):
         infer_table_structure=True
     )
     return elements
-    # return [PDFData(title=element['title'], content=element['content']) for element in elements]
 
 # Function to process uploaded files
 def process_uploaded_files(uploaded_files):
@@ -130,55 +127,8 @@ def process_uploaded_files(uploaded_files):
                 results.append(('CSV', csv_documents))
     
     return results
-def get_propositions(text):
-    
-    runnable_output = extraction_runnable.invoke({'input': text}).content
-    print("Runnable Output:", runnable_output)  # Debugging output
-    propositions = extraction_chain.run(runnable_output)
-    return propositions
 
-def extract_pdf(elements, type="propositions"):
-    for e in elements:
-        text = e.text
-        extract_files(text, pdf=True)
-
-# def extract_files(doc, pdf=False):
-#     unique_id = str(uuid.uuid4())
-#     if pdf:
-#         text = e.text
-#         docstore_elements.append(Document(page_content=doc, metadata={id_key: unique_id}))
-#     else:
-#         splits = text_splitter.split_documents(doc)
-#         doc.metadata[id_key] = unique_id
-#         docstore_elements.append(doc)
-#     if type == "propositions":
-#         prop = []
-#         if pdf:
-#             prop = get_propositions(text)
-#         else:
-#             p=[]
-#             for split in splits:
-#                 p = get_propositions(split.page_content)
-#                 prop.extend(p)
-#         props = [p.sentences for p in prop]
-#         for sentence in props:
-#             for s in sentence:  
-#                 chunk_summary_document = Document(page_content=s, metadata={id_key: unique_id})
-#                 vectorstore_elements.append(chunk_summary_document)
-#     elif type == "summary":
-#         if pdf:
-#             chunk_summary = summarize_chain.run([text])
-#         else:
-#             chunk_summary = summarize_chain.run(splits)
-#         chunk_summary_document = Document(page_content=chunk_summary, metadata={id_key: unique_id})
-#         vectorstore_elements.append(chunk_summary_document)
-#     elif type == "basic":
-#         if pdf:
-#             splits = text_splitter.split_documents([Document(page_content=text)])
-#         for split in splits:
-#             chunk_document = Document(page_content=split.page_content, metadata={id_key: unique_id})
-#             vectorstore_elements.append(chunk_document)
-
+# Function to extract files
 def extract_files(doc, extraction_type, pdf=False):
     unique_id = str(uuid.uuid4())
     if not pdf:
@@ -186,23 +136,15 @@ def extract_files(doc, extraction_type, pdf=False):
         for split in splits:
             split.metadata[id_key] = unique_id
             docstore_elements.append(split)
-
     else:
         text = doc.text
         doc_gen = Document(page_content=text, metadata={id_key: unique_id})
         splits = [doc_gen]
         docstore_elements.append(doc_gen)
 
-    
     if extraction_type == "propositions":
-        if pdf:
-            propositions = get_propositions(text)
-        else:
-            propositions = get_propositions(doc.page_content)
-        for p in propositions:
-            for sentence in p.sentences:
-                chunk_summary_document = Document(page_content=sentence, metadata={id_key: unique_id})
-                vectorstore_elements.append(chunk_summary_document)
+        # Custom proposition extraction logic
+        pass
     elif extraction_type == "summary":
         chunk_summary = summarize_chain.run(splits)
         chunk_summary_document = Document(page_content=chunk_summary, metadata={id_key: unique_id})
@@ -212,41 +154,61 @@ def extract_files(doc, extraction_type, pdf=False):
             chunk_document = Document(page_content=split.page_content, metadata={id_key: unique_id})
             vectorstore_elements.append(chunk_document)
 
+# Vector store initialization after file extraction
+def initialize_vectorstore():
+    global db_multi_vector, retriever_multi_vector
 
+    docstore_multi_vector = InMemoryStore()
+    db_multi_vector = embedding_model  # Assuming you're using the CustomEmbeddings model
+    retriever_multi_vector = MultiVectorRetriever(
+        vectorstore=db_multi_vector,
+        docstore=docstore_multi_vector,
+        id_key=id_key
+    )
 
-def store_files():
-    pass
+    retriever_multi_vector.docstore.mset([(doc.metadata[id_key], doc) for doc in docstore_elements])
 
-# Streamlit UI
-st.title("File Upload and Processing")
-extraction_type = st.selectbox("Select extraction type:", options=["basic", "propositions", "summary"])
+# Streamlit sidebar and query section
+st.sidebar.title("Upload Files")
+uploaded_files = st.sidebar.file_uploader("Upload files (PDF, CSV, XML, ZIP)", type=['pdf', 'csv', 'xml', 'zip'], accept_multiple_files=True)
+extraction_type = st.sidebar.selectbox("Select extraction type:", options=["basic", "propositions", "summary"])
 
-uploaded_files = st.file_uploader("Upload files (PDF, CSV, XML, ZIP)", type=['pdf', 'csv', 'xml', 'zip'], accept_multiple_files=True)
-
-if st.button("Process Files"):
+if st.sidebar.button("Process Files"):
     if uploaded_files:
         results = process_uploaded_files(uploaded_files)
-        
-        # for ext, docs in results:
-        #     st.write(f"Loaded {len(docs)} {ext} documents.")
-        #     for doc in docs:
-        #         if ext is "PDF":
-        #             extract_pdf(doc)
-        #             # st.write(f"**Title:** {doc.title}")
-        #             # st.write(f"**Content:** {doc.content[:200]}...")  # Display the first 200 characters
-        #         else:
-        #             extract_files(doc)
-        #     store_files()
         for ext, docs in results:
             st.write(f"Loaded {len(docs)} {ext} documents.")
             for doc in docs:
                 if ext == "PDF":
-                    # for pdf_element in doc:
-                    #     extract_files(pdf_element, extraction_type)
                     extract_files(doc, extraction_type, pdf=True)
                 else:
                     extract_files(doc, extraction_type)
-                    st.write(doc) 
-
+        initialize_vectorstore()  # Initialize vector store after files are processed
+        st.sidebar.success("Files processed. You can now query the documents.")
     else:
-        st.error("Please upload at least one file.")
+        st.sidebar.error("Please upload at least one file.")
+
+# User input for querying
+if docstore_elements:
+    query = st.text_input("Enter your query:")
+    use_compression = st.checkbox("Enable Compression")
+
+    if st.button("Submit Query"):
+        if query:
+            if use_compression:
+                # Use compression retriever
+                compressor = LLMChainExtractor.from_llm(llm)
+                compression_retriever = ContextualCompressionRetriever(
+                    base_compressor=compressor,
+                    base_retriever=retriever_multi_vector
+                )
+                compressed_docs = compression_retriever.get_relevant_documents(query)
+                response = create_stuff_documents_chain(ChatGroq(), PROMPT).run(compressed_docs)
+            else:
+                # Without compression
+                docs_retrieved_multi_vector = retriever_multi_vector.get_relevant_documents(query)
+                response = create_stuff_documents_chain(ChatGroq(), PROMPT).run(docs_retrieved_multi_vector)
+            
+            st.write(response)
+        else:
+            st.error("Please enter a query.")
