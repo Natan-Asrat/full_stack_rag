@@ -24,6 +24,7 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.retrievers.document_compressors import LLMChainExtractor
 from langchain.retrievers import ContextualCompressionRetriever, MultiVectorRetriever
 from langchain.prompts import PromptTemplate
+from langchain.vectorstores import Chroma
 from dotenv import load_dotenv
 # Initial setup
 load_dotenv()
@@ -159,7 +160,8 @@ def initialize_vectorstore():
     global db_multi_vector, retriever_multi_vector
 
     docstore_multi_vector = InMemoryStore()
-    db_multi_vector = embedding_model  # Assuming you're using the CustomEmbeddings model
+    db_multi_vector = Chroma.from_documents(vectorstore_elements, embedding_model)
+
     retriever_multi_vector = MultiVectorRetriever(
         vectorstore=db_multi_vector,
         docstore=docstore_multi_vector,
