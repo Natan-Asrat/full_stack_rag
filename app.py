@@ -24,7 +24,7 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.retrievers.document_compressors import LLMChainExtractor
 from langchain.retrievers import ContextualCompressionRetriever, MultiVectorRetriever
 from langchain.prompts import PromptTemplate
-from langchain.vectorstores import Chroma
+from langchain_community.vectorstores import Chroma
 from dotenv import load_dotenv
 # Initial setup
 load_dotenv()
@@ -85,6 +85,13 @@ class CustomEmbeddings:
 embedding_model = CustomEmbeddings()
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=3000, chunk_overlap=200)
 
+class Sentences(BaseModel):
+    sentences:  List[str]
+obj = hub.pull("wfh/proposal-indexing")
+
+extraction_chain = create_extraction_chain_pydantic(pydantic_schema=Sentences, llm=llm) 
+extraction_runnable = obj | llm
+
 # Function to process PDF files
 def process_pdf(file_path):
     elements = partition_pdf(
@@ -134,7 +141,12 @@ def process_uploaded_files(uploaded_files):
                 results.append(('CSV', csv_documents))
     
     return results
-
+def get_propositions(text):
+    
+    runnable_output = extraction_runnable.invoke({'input': text}).content
+    print("Runnable Output:", runnable_output)  # Debugging output
+    propositions = extraction_chain.run(runnable_output)
+    return propositions
 # Function to extract files
 def extract_files(doc, extraction_type, pdf=False):
     unique_id = str(uuid.uuid4())
@@ -150,8 +162,12 @@ def extract_files(doc, extraction_type, pdf=False):
         docstore_elements.append(doc_gen)
 
     if extraction_type == "propositions":
-        # Custom proposition extraction logic
-        pass
+        propositions = get_propositions(doc.page_content)
+        for p in propositions:
+            for sentence in p.sentences:
+                chunk_summary_document = Document(page_content=sentence, metadata={id_key: unique_id})
+                vectorstore_elements.append(chunk_summary_document)
+        
     elif extraction_type == "summary":
         chunk_summary = summarize_chain.run(splits)
         chunk_summary_document = Document(page_content=chunk_summary, metadata={id_key: unique_id})
@@ -163,6 +179,8 @@ def extract_files(doc, extraction_type, pdf=False):
 
 # Vector store initialization after file extraction
 def initialize_vectorstore():
+    for v in vectorstore_elements:
+        print(v)
     global db_multi_vector, retriever_multi_vector
 
     docstore_multi_vector = InMemoryStore()
