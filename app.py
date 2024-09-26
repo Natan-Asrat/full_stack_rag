@@ -55,7 +55,7 @@ retriever_multi_vector = None
 llm = ChatGroq()
 summarize_chain = load_summarize_chain(llm)
 # Cache resource to load model
-@st.cache_resource
+# @st.cache_resource
 def load_model():
     model_name = "sentence-transformers/all-MiniLM-L6-v2"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
