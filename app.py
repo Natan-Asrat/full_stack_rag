@@ -55,7 +55,7 @@ retriever_multi_vector = None
 llm = ChatGroq()
 summarize_chain = load_summarize_chain(llm)
 # Cache resource to load model
-# @st.cache_resource
+@st.cache_resource
 def load_model():
     model_name = "sentence-transformers/all-MiniLM-L6-v2"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -162,11 +162,12 @@ def extract_files(doc, extraction_type, pdf=False):
         docstore_elements.append(doc_gen)
 
     if extraction_type == "propositions":
-        propositions = get_propositions(doc.page_content)
-        for p in propositions:
-            for sentence in p.sentences:
-                chunk_summary_document = Document(page_content=sentence, metadata={id_key: unique_id})
-                vectorstore_elements.append(chunk_summary_document)
+        for split in splits:
+            propositions = get_propositions(split.page_content)
+            for p in propositions:
+                for sentence in p.sentences:
+                    chunk_summary_document = Document(page_content=sentence, metadata={id_key: unique_id})
+                    vectorstore_elements.append(chunk_summary_document)
         
     elif extraction_type == "summary":
         chunk_summary = summarize_chain.run(splits)
