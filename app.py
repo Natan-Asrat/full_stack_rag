@@ -28,6 +28,12 @@ from langchain.vectorstores import Chroma
 from dotenv import load_dotenv
 # Initial setup
 load_dotenv()
+import sys
+package = __import__('pysqlite3')
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
+
+
 prompt_template = """
 Use the following context to answer the question at the end. If you don't know the answer, just say that you don't know, dont try to make up an answer.
 <context>
