@@ -180,7 +180,7 @@ def extract_files(doc, extraction_type, pdf=False):
 # Vector store initialization after file extraction
 def initialize_vectorstore():
     for v in vectorstore_elements:
-        print(v)
+        print(type(v))
     global db_multi_vector, retriever_multi_vector
 
     docstore_multi_vector = InMemoryStore()
