@@ -239,26 +239,27 @@ extraction_type = st.sidebar.selectbox("Select extraction type:", options=["basi
 
 if st.sidebar.button("Process Files"):
     if uploaded_files:
-        results = process_uploaded_files(uploaded_files)
-        for ext, docs in results:
-            uuids = [str(uuid.uuid4()) for _ in docs]  # Generate UUIDs
-            for doc, doc_uuid in zip(docs, uuids):
-                if isinstance(doc.metadata, dict):
-                    doc.metadata[id_key] = doc_uuid
+        with st.spinner('Processing files...'):
+            results = process_uploaded_files(uploaded_files)
+            for ext, docs in results:
+                uuids = [str(uuid.uuid4()) for _ in docs]  # Generate UUIDs
+                for doc, doc_uuid in zip(docs, uuids):
+                    if isinstance(doc.metadata, dict):
+                        doc.metadata[id_key] = doc_uuid
+                    else:
+                        metadata_dict = doc.metadata.to_dict()
+                        metadata_dict[id_key] = doc_uuid
+                        doc.metadata = metadata_dict
+
+
+                st.write(f"Loaded {st.session_state.counts[ext]} {ext} documents with {len(docs)} elements.")
+                
+                if ext == "PDF":
+                    extract_files(docs, extraction_type, pdf=True)
                 else:
-                    metadata_dict = doc.metadata.to_dict()
-                    metadata_dict[id_key] = doc_uuid
-                    doc.metadata = metadata_dict
-
-
-            st.write(f"Loaded {st.session_state.counts[ext]} {ext} documents with {len(docs)} elements.")
-            
-            if ext == "PDF":
-                extract_files(docs, extraction_type, pdf=True)
-            else:
-                extract_files(docs, extraction_type)
-        initialize_vectorstore()  # Initialize vector store after files are processed
-        st.sidebar.success("Files processed. You can now query the documents.")
+                    extract_files(docs, extraction_type)
+            initialize_vectorstore()  # Initialize vector store after files are processed
+            st.sidebar.success("Files processed. You can now query the documents.")
     else:
         st.sidebar.error("Please upload at least one file.")
 
