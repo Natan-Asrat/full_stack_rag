@@ -66,6 +66,11 @@ if 'retriever_multi_vector' not in st.session_state:
 if 'db_multi_vector' not in st.session_state:
     st.session_state.db_multi_vector = None
 
+if 'temp_dir' not in st.session_state:  
+    st.session_state.temp_dir = tempfile.TemporaryDirectory()
+
+
+
 # Initialize language model
 llm = ChatGroq()
 summarize_chain = load_summarize_chain(llm)
@@ -218,28 +223,48 @@ def extract_files(doc, extraction_type, pdf=False):
             st.session_state.vectorstore_elements.append(chunk_document)
 
 # Vector store initialization after file extraction
-def initialize_vectorstore():
-    # global db_multi_vector, retriever_multi_vector
+# def initialize_vectorstore():
+#     # global db_multi_vector, retriever_multi_vector
 
     
-    # st.session_state.db_multi_vector = Chroma.from_documents(st.session_state.vectorstore_elements, embedding_model)
+#     # st.session_state.db_multi_vector = Chroma.from_documents(st.session_state.vectorstore_elements, embedding_model)
 
-    # st.session_state.retriever_multi_vector = MultiVectorRetriever(
-    #     vectorstore=st.session_state.db_multi_vector,
-    #     docstore=st.session_state.docstore_multi_vector,
-    #     id_key=id_key
-    # )
+#     # st.session_state.retriever_multi_vector = MultiVectorRetriever(
+#     #     vectorstore=st.session_state.db_multi_vector,
+#     #     docstore=st.session_state.docstore_multi_vector,
+#     #     id_key=id_key
+#     # )
 
-    # st.session_state.retriever_multi_vector.docstore.mset([(doc.metadata[id_key], doc) for doc in st.session_state.docstore_elements])
-    if 'db_multi_vector' not in st.session_state or st.session_state.db_multi_vector is None:
-        # Only create the vectorstore if it doesn't already exist
+#     # st.session_state.retriever_multi_vector.docstore.mset([(doc.metadata[id_key], doc) for doc in st.session_state.docstore_elements])
+#     temp_dir = tempfile.gettempdir()  # Get temporary directory
+#     db_path = os.path.join(temp_dir, "chroma_db")
+#     if 'db_multi_vector' not in st.session_state or st.session_state.db_multi_vector is None:
+#         # Only create the vectorstore if it doesn't already exist
+#         st.session_state.db_multi_vector = Chroma.from_documents(st.session_state.vectorstore_elements, embedding_model)
+#         st.session_state.retriever_multi_vector = MultiVectorRetriever(
+#             vectorstore=st.session_state.db_multi_vector,
+#             docstore=st.session_state.docstore_multi_vector,
+#             id_key=id_key
+#         )
+#         st.session_state.retriever_multi_vector.docstore.mset([(doc.metadata[id_key], doc) for doc in st.session_state.docstore_elements])
+def initialize_vectorstore():
+    db_path = os.path.join(st.session_state.temp_dir.name, "chroma_db")  # Use user's temporary directory
+
+    # Initialize the vectorstore from existing database or create a new one
+    if os.path.exists(db_path):
+        st.session_state.db_multi_vector = Chroma.load_from_path(db_path, embedding_model)
+    else:
         st.session_state.db_multi_vector = Chroma.from_documents(st.session_state.vectorstore_elements, embedding_model)
-        st.session_state.retriever_multi_vector = MultiVectorRetriever(
-            vectorstore=st.session_state.db_multi_vector,
-            docstore=st.session_state.docstore_multi_vector,
-            id_key=id_key
-        )
-        st.session_state.retriever_multi_vector.docstore.mset([(doc.metadata[id_key], doc) for doc in st.session_state.docstore_elements])
+        st.session_state.db_multi_vector.save_to_path(db_path)  # Save to temporary file
+
+    st.session_state.retriever_multi_vector = MultiVectorRetriever(
+        vectorstore=st.session_state.db_multi_vector,
+        docstore=st.session_state.docstore_multi_vector,
+        id_key=id_key
+    )
+    st.session_state.retriever_multi_vector.docstore.mset([(doc.metadata[id_key], doc) for doc in st.session_state.docstore_elements])
+
+
 # Streamlit sidebar and query section
 st.sidebar.title("Upload Files")
 uploaded_files = st.sidebar.file_uploader("Upload files (PDF, CSV, XML, ZIP)", type=['pdf', 'csv', 'xml', 'zip'], accept_multiple_files=True)
