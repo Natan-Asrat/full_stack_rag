@@ -152,7 +152,7 @@ def process_uploaded_files(uploaded_files):
                 ext = 'PDF'
                 pdf_data = process_pdf(file_path)
                 results.append((ext, pdf_data))
-                counts[ext] = counts[ext] + 1 if counts[ext] else counts[ext] = 1
+                
             elif uploaded_file.name.endswith('.xml'):
                 ext = 'XML'
                 loader = DirectoryLoader(path=temp_dir, glob='**/*.xml', loader_cls=UnstructuredXMLLoader)
