@@ -205,7 +205,7 @@ if st.sidebar.button("Process Files"):
         for ext, docs in results:
             uuids = [str(uuid.uuid4()) for _ in docs]  # Generate UUIDs
             for doc, doc_uuid in zip(docs, uuids):
-                doc.metadata["uuid"] = doc_uuid
+                doc.metadata[id_key] = doc_uuid
             st.write(f"Loaded {len(docs)} {ext} documents.")
             
             if ext == "PDF":
