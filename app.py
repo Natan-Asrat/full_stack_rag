@@ -46,8 +46,13 @@ PROMPT = PromptTemplate(template=prompt_template, input_variables=["context", "i
 id_key = "doc_key"
 
 documents = []
-docstore_elements = []
-vectorstore_elements = []
+# docstore_elements = []
+# vectorstore_elements = []
+if 'docstore_elements' not in st.session_state:
+    st.session_state.docstore_elements = []
+if 'vectorstore_elements' not in st.session_state:
+    st.session_state.vectorstore_elements = []
+
 db_multi_vector = None
 retriever_multi_vector = None
 
@@ -162,20 +167,20 @@ def get_propositions(text):
     return propositions
 # Function to extract files
 def extract_files(doc, extraction_type, pdf=False):
-    global docstore_elements, vectorstore_elements
+    # global docstore_elements, vectorstore_elements
     if not pdf:
         splits = text_splitter.split_documents(doc)
         for split in splits:
             unique_id = split.metadata[id_key]
             split.metadata[id_key] = unique_id
-            docstore_elements.append(split)
+            st.session_state.docstore_elements.append(split)
     else:
         splits = [
             Document(page_content=d.text, metadata={id_key: d.metadata[id_key]})
             for d in doc
         ]
         
-        docstore_elements += splits
+        st.session_state.docstore_elements += splits
     for split in splits:
         unique_id = split.metadata[id_key]
         if extraction_type == "propositions":
@@ -183,22 +188,22 @@ def extract_files(doc, extraction_type, pdf=False):
             for p in propositions:
                 for sentence in p.sentences:
                     chunk_summary_document = Document(page_content=sentence, metadata={id_key: unique_id})
-                    vectorstore_elements.append(chunk_summary_document)
+                    st.session_state.vectorstore_elements.append(chunk_summary_document)
         
         elif extraction_type == "summary":
             chunk_summary = summarize_chain.run([split])
             chunk_summary_document = Document(page_content=chunk_summary, metadata={id_key: unique_id})
-            vectorstore_elements.append(chunk_summary_document)
+            st.session_state.vectorstore_elements.append(chunk_summary_document)
         elif extraction_type == "basic":
             chunk_document = Document(page_content=split.page_content, metadata={id_key: unique_id})
-            vectorstore_elements.append(chunk_document)
+            st.session_state.vectorstore_elements.append(chunk_document)
 
 # Vector store initialization after file extraction
 def initialize_vectorstore():
     global db_multi_vector, retriever_multi_vector
 
     docstore_multi_vector = InMemoryStore()
-    db_multi_vector = Chroma.from_documents(vectorstore_elements, embedding_model)
+    db_multi_vector = Chroma.from_documents(st.session_state.vectorstore_elements, embedding_model)
 
     retriever_multi_vector = MultiVectorRetriever(
         vectorstore=db_multi_vector,
@@ -206,7 +211,7 @@ def initialize_vectorstore():
         id_key=id_key
     )
 
-    retriever_multi_vector.docstore.mset([(doc.metadata[id_key], doc) for doc in docstore_elements])
+    retriever_multi_vector.docstore.mset([(doc.metadata[id_key], doc) for doc in st.session_state.docstore_elements])
 
 # Streamlit sidebar and query section
 st.sidebar.title("Upload Files")
@@ -239,7 +244,7 @@ if st.sidebar.button("Process Files"):
         st.sidebar.error("Please upload at least one file.")
 
 # User input for querying
-if docstore_elements:
+if st.session_state.docstore_elements:
     query = st.text_input("Enter your query:")
     use_compression = st.checkbox("Enable Compression")
 
