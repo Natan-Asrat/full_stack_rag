@@ -54,8 +54,14 @@ if 'docstore_elements' not in st.session_state:
 if 'vectorstore_elements' not in st.session_state:
     st.session_state.vectorstore_elements = []
 
-db_multi_vector = None
-retriever_multi_vector = None
+# db_multi_vector = None
+# retriever_multi_vector = None
+if 'docstore_multi_vector' not in st.session_state:
+    st.session_state.docstore_multi_vector = InMemoryStore()
+if 'retriever_multi_vector' not in st.session_state:
+    st.session_state.retriever_multi_vector = None
+if 'db_multi_vector' not in st.session_state:
+    st.session_state.db_multi_vector = None
 
 # Initialize language model
 llm = ChatGroq()
@@ -210,18 +216,18 @@ def extract_files(doc, extraction_type, pdf=False):
 
 # Vector store initialization after file extraction
 def initialize_vectorstore():
-    global db_multi_vector, retriever_multi_vector
+    # global db_multi_vector, retriever_multi_vector
 
-    docstore_multi_vector = InMemoryStore()
-    db_multi_vector = Chroma.from_documents(st.session_state.vectorstore_elements, embedding_model)
+    
+    st.session_state.db_multi_vector = Chroma.from_documents(st.session_state.vectorstore_elements, embedding_model)
 
-    retriever_multi_vector = MultiVectorRetriever(
-        vectorstore=db_multi_vector,
-        docstore=docstore_multi_vector,
+    st.session_state.retriever_multi_vector = MultiVectorRetriever(
+        vectorstore=st.session_state.db_multi_vector,
+        docstore=st.session_state.docstore_multi_vector,
         id_key=id_key
     )
 
-    retriever_multi_vector.docstore.mset([(doc.metadata[id_key], doc) for doc in st.session_state.docstore_elements])
+    st.session_state.retriever_multi_vector.docstore.mset([(doc.metadata[id_key], doc) for doc in st.session_state.docstore_elements])
 
 # Streamlit sidebar and query section
 st.sidebar.title("Upload Files")
@@ -260,18 +266,19 @@ if st.session_state.docstore_elements:
 
     if st.button("Submit Query"):
         if query:
+            
             if use_compression:
                 # Use compression retriever
                 compressor = LLMChainExtractor.from_llm(llm)
                 compression_retriever = ContextualCompressionRetriever(
                     base_compressor=compressor,
-                    base_retriever=retriever_multi_vector
+                    base_retriever=st.session_state.retriever_multi_vector
                 )
                 compressed_docs = compression_retriever.get_relevant_documents(query)
                 response = create_stuff_documents_chain(ChatGroq(), PROMPT).run(compressed_docs)
             else:
                 # Without compression
-                docs_retrieved_multi_vector = retriever_multi_vector.get_relevant_documents(query)
+                docs_retrieved_multi_vector = st.session_state.retriever_multi_vector.get_relevant_documents(query)
                 response = create_stuff_documents_chain(ChatGroq(), PROMPT).run(docs_retrieved_multi_vector)
             
             st.write(response)
