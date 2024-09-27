@@ -222,16 +222,24 @@ def initialize_vectorstore():
     # global db_multi_vector, retriever_multi_vector
 
     
-    st.session_state.db_multi_vector = Chroma.from_documents(st.session_state.vectorstore_elements, embedding_model)
+    # st.session_state.db_multi_vector = Chroma.from_documents(st.session_state.vectorstore_elements, embedding_model)
 
-    st.session_state.retriever_multi_vector = MultiVectorRetriever(
-        vectorstore=st.session_state.db_multi_vector,
-        docstore=st.session_state.docstore_multi_vector,
-        id_key=id_key
-    )
+    # st.session_state.retriever_multi_vector = MultiVectorRetriever(
+    #     vectorstore=st.session_state.db_multi_vector,
+    #     docstore=st.session_state.docstore_multi_vector,
+    #     id_key=id_key
+    # )
 
-    st.session_state.retriever_multi_vector.docstore.mset([(doc.metadata[id_key], doc) for doc in st.session_state.docstore_elements])
-
+    # st.session_state.retriever_multi_vector.docstore.mset([(doc.metadata[id_key], doc) for doc in st.session_state.docstore_elements])
+    if 'db_multi_vector' not in st.session_state or st.session_state.db_multi_vector is None:
+        # Only create the vectorstore if it doesn't already exist
+        st.session_state.db_multi_vector = Chroma.from_documents(st.session_state.vectorstore_elements, embedding_model)
+        st.session_state.retriever_multi_vector = MultiVectorRetriever(
+            vectorstore=st.session_state.db_multi_vector,
+            docstore=st.session_state.docstore_multi_vector,
+            id_key=id_key
+        )
+        st.session_state.retriever_multi_vector.docstore.mset([(doc.metadata[id_key], doc) for doc in st.session_state.docstore_elements])
 # Streamlit sidebar and query section
 st.sidebar.title("Upload Files")
 uploaded_files = st.sidebar.file_uploader("Upload files (PDF, CSV, XML, ZIP)", type=['pdf', 'csv', 'xml', 'zip'], accept_multiple_files=True)
