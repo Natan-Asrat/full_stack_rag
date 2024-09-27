@@ -219,7 +219,7 @@ if st.sidebar.button("Process Files"):
         for ext, docs in results:
             uuids = [str(uuid.uuid4()) for _ in docs]  # Generate UUIDs
             for doc, doc_uuid in zip(docs, uuids):
-                metadata_dict = dict(doc.metadata)
+                metadata_dict = doc.metadata.to_dict()
                 metadata_dict[id_key] = doc_uuid
                 doc.metadata = metadata_dict
 
