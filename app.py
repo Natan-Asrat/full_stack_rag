@@ -239,7 +239,7 @@ uploaded_files = st.sidebar.file_uploader("Upload files (PDF, CSV, XML, ZIP)", t
 extraction_type = st.sidebar.selectbox("Select extraction type:", options=["basic", "propositions", "summary"])
 
 if st.sidebar.button("Process Files"):
-    chromadb.api.client.SharedSystemClient.clear_system_cache()
+    # chromadb.api.client.SharedSystemClient.clear_system_cache()
 
     if uploaded_files:
         results = process_uploaded_files(uploaded_files)
@@ -260,8 +260,9 @@ if st.sidebar.button("Process Files"):
                 extract_files(docs, extraction_type, pdf=True)
             else:
                 extract_files(docs, extraction_type)
-        initialize_vectorstore()  # Initialize vector store after files are processed
         chromadb.api.client.SharedSystemClient.clear_system_cache()
+
+        initialize_vectorstore()  # Initialize vector store after files are processed
         st.sidebar.success("Files processed. You can now query the documents.")
     else:
         st.sidebar.error("Please upload at least one file.")
