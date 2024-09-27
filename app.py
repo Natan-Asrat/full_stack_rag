@@ -74,7 +74,20 @@ def get_embedding(text):
 # Custom Embeddings class
 class CustomEmbeddings:
     def embed_documents(self, texts):
-        return [get_embedding(chunk.page_content) for chunk in texts]
+        embeddings = []
+        for chunk in texts:
+            if isinstance(chunk, Document):
+                text_to_embed = chunk.page_content
+            elif isinstance(chunk, str):
+                text_to_embed = chunk
+            else:
+                raise TypeError(f"Unsupported type {type(chunk)} in embed_documents.")
+            
+            embedding = get_embedding(text_to_embed)
+            embeddings.append(embedding)
+        
+        return embeddings
+        # return [get_embedding(chunk.page_content) for chunk in texts]
     
     def embed_query(self, text):
         inputs = tokenizer(text, padding=True, truncation=True, return_tensors="pt")
