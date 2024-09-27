@@ -152,7 +152,7 @@ def extract_files(doc, extraction_type, pdf=False):
     if not pdf:
         splits = text_splitter.split_documents(doc)
         for split in splits:
-            unique_id = doc.metadata[id_key]
+            unique_id = split.metadata[id_key]
             split.metadata[id_key] = unique_id
             docstore_elements.append(split)
     else:
