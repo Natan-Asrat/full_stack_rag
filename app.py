@@ -252,10 +252,11 @@ def initialize_vectorstore():
 
     # Initialize the vectorstore from existing database or create a new one
     if os.path.exists(db_path):
-        st.session_state.db_multi_vector = Chroma.load_from_path(db_path, embedding_model)
+        # st.session_state.db_multi_vector = Chroma.load_from_path(db_path, embedding_model)
+        st.session_state.db_multi_vector = Chroma(persist_directory=db_path, embedding_function=embedding_model)
     else:
-        st.session_state.db_multi_vector = Chroma.from_documents(st.session_state.vectorstore_elements, embedding_model)
-        st.session_state.db_multi_vector.save_to_path(db_path)  # Save to temporary file
+        st.session_state.db_multi_vector = Chroma.from_documents(st.session_state.vectorstore_elements, embedding_model, persist_directory=db_path)
+        st.session_state.db_multi_vector.persist()  # Save to temporary file
 
     st.session_state.retriever_multi_vector = MultiVectorRetriever(
         vectorstore=st.session_state.db_multi_vector,
