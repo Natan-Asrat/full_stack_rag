@@ -26,6 +26,7 @@ from langchain.retrievers import ContextualCompressionRetriever, MultiVectorRetr
 from langchain.prompts import PromptTemplate
 from langchain_community.vectorstores import Chroma
 from dotenv import load_dotenv
+import chromadb
 # Initial setup
 load_dotenv()
 import sys
@@ -238,6 +239,8 @@ uploaded_files = st.sidebar.file_uploader("Upload files (PDF, CSV, XML, ZIP)", t
 extraction_type = st.sidebar.selectbox("Select extraction type:", options=["basic", "propositions", "summary"])
 
 if st.sidebar.button("Process Files"):
+    chromadb.api.client.SharedSystemClient.clear_system_cache()
+
     if uploaded_files:
         results = process_uploaded_files(uploaded_files)
         for ext, docs in results:
@@ -258,6 +261,7 @@ if st.sidebar.button("Process Files"):
             else:
                 extract_files(docs, extraction_type)
         initialize_vectorstore()  # Initialize vector store after files are processed
+        chromadb.api.client.SharedSystemClient.clear_system_cache()
         st.sidebar.success("Files processed. You can now query the documents.")
     else:
         st.sidebar.error("Please upload at least one file.")
