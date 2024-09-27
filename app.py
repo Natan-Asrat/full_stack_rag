@@ -46,6 +46,7 @@ PROMPT = PromptTemplate(template=prompt_template, input_variables=["context", "i
 id_key = "doc_key"
 
 documents = []
+counts = {}
 # docstore_elements = []
 # vectorstore_elements = []
 if 'docstore_elements' not in st.session_state:
@@ -125,6 +126,7 @@ def process_pdf(file_path):
 
 # Function to process uploaded files
 def process_uploaded_files(uploaded_files):
+    global counts
     results = []
     
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -147,16 +149,21 @@ def process_uploaded_files(uploaded_files):
         for uploaded_file in uploaded_files:
             file_path = os.path.join(temp_dir, uploaded_file.name)
             if uploaded_file.name.endswith('.pdf'):
+                ext = 'PDF'
                 pdf_data = process_pdf(file_path)
-                results.append(('PDF', pdf_data))
+                results.append((ext, pdf_data))
+                counts[ext] = counts[ext] + 1 if counts[ext] else counts[ext] = 1
             elif uploaded_file.name.endswith('.xml'):
+                ext = 'XML'
                 loader = DirectoryLoader(path=temp_dir, glob='**/*.xml', loader_cls=UnstructuredXMLLoader)
                 xml_documents = loader.load()
-                results.append(('XML', xml_documents))
+                results.append((ext, xml_documents))
             elif uploaded_file.name.endswith('.csv'):
+                ext = 'CSV'
                 loader = DirectoryLoader(path=temp_dir, glob='**/*.csv', loader_cls=CSVLoader)
                 csv_documents = loader.load()
-                results.append(('CSV', csv_documents))
+                results.append((ext, csv_documents))
+            counts[ext] = counts[ext] + 1 if ext in counts else 1
     
     return results
 def get_propositions(text):
@@ -232,7 +239,7 @@ if st.sidebar.button("Process Files"):
                     doc.metadata = metadata_dict
 
 
-            st.write(f"Loaded {len(docs)} {ext} documents.")
+            st.write(f"Loaded {counts[ext]} {ext} documents with {len(docs)} elements.")
             
             if ext == "PDF":
                 extract_files(docs, extraction_type, pdf=True)
