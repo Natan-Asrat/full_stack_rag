@@ -163,7 +163,10 @@ def process_uploaded_files(uploaded_files):
                 loader = DirectoryLoader(path=temp_dir, glob='**/*.csv', loader_cls=CSVLoader)
                 csv_documents = loader.load()
                 results.append((ext, csv_documents))
-            counts[ext] = counts[ext] + 1 if ext in counts else 1
+            if ext in counts:
+                counts[ext] = counts[ext] + 1 
+            else:
+                counts[ext] = 1
     
     return results
 def get_propositions(text):
