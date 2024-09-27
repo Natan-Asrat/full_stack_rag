@@ -45,8 +45,11 @@ Question: {input}
 PROMPT = PromptTemplate(template=prompt_template, input_variables=["context", "input"])
 id_key = "doc_key"
 
-documents = []
-counts = {}
+# documents=[]
+# if 'documents' not in st.session_state:
+#     st.session_state.documents = []
+if 'counts' not in st.session_state:
+    st.session_state.counts = {}
 # docstore_elements = []
 # vectorstore_elements = []
 if 'docstore_elements' not in st.session_state:
@@ -132,7 +135,7 @@ def process_pdf(file_path):
 
 # Function to process uploaded files
 def process_uploaded_files(uploaded_files):
-    global counts
+    # global counts
     results = []
     
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -169,10 +172,10 @@ def process_uploaded_files(uploaded_files):
                 loader = DirectoryLoader(path=temp_dir, glob='**/*.csv', loader_cls=CSVLoader)
                 csv_documents = loader.load()
                 results.append((ext, csv_documents))
-            if ext in counts:
-                counts[ext] = counts[ext] + 1 
+            if ext in st.session_state.counts:
+                st.session_state.counts[ext] = st.session_state.counts[ext] + 1 
             else:
-                counts[ext] = 1
+                st.session_state.counts[ext] = 1
     
     return results
 def get_propositions(text):
@@ -248,7 +251,7 @@ if st.sidebar.button("Process Files"):
                     doc.metadata = metadata_dict
 
 
-            st.write(f"Loaded {counts[ext]} {ext} documents with {len(docs)} elements.")
+            st.write(f"Loaded {st.session_state.counts[ext]} {ext} documents with {len(docs)} elements.")
             
             if ext == "PDF":
                 extract_files(docs, extraction_type, pdf=True)
