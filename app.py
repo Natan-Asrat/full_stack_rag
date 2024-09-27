@@ -149,6 +149,7 @@ def get_propositions(text):
     return propositions
 # Function to extract files
 def extract_files(doc, extraction_type, pdf=False):
+    global docstore_elements, vectorstore_elements
     if not pdf:
         splits = text_splitter.split_documents(doc)
         for split in splits:
