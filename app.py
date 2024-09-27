@@ -21,6 +21,8 @@ from transformers import AutoTokenizer, AutoModel
 import torch
 from langchain.prompts import PromptTemplate
 from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains.retrieval import create_retrieval_chain
+
 from langchain.retrievers.document_compressors import LLMChainExtractor
 from langchain.retrievers import ContextualCompressionRetriever, MultiVectorRetriever
 from langchain.prompts import PromptTemplate
@@ -317,8 +319,10 @@ if st.session_state.docstore_elements:
             else:
                 # Without compression
                 docs_retrieved_multi_vector = st.session_state.retriever_multi_vector.get_relevant_documents(query)
-                response = create_stuff_documents_chain(ChatGroq(), PROMPT).run(docs_retrieved_multi_vector)
-            
+                
+                docs_chain = create_stuff_documents_chain(ChatGroq(), PROMPT)
+                retrieval_chain_multi_vector = create_retrieval_chain(st.session_state.retriever_multi_vector, docs_chain)
+                response = retrieval_chain_multi_vector.invoke({"context": docs_retrieved_multi_vector, "input": query})
             st.write(response)
         else:
             st.error("Please enter a query.")
