@@ -209,9 +209,9 @@ if st.sidebar.button("Process Files"):
             st.write(f"Loaded {len(docs)} {ext} documents.")
             
             if ext == "PDF":
-                extract_files(doc, extraction_type, pdf=True)
+                extract_files(docs, extraction_type, pdf=True)
             else:
-                extract_files(doc, extraction_type)
+                extract_files(docs, extraction_type)
         initialize_vectorstore()  # Initialize vector store after files are processed
         st.sidebar.success("Files processed. You can now query the documents.")
     else:
