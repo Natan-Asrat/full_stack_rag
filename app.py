@@ -40,6 +40,7 @@ sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 st.header("Full Stack RAG by Natan")
 prompt_template = """
 Use the following context to answer the question at the end. If you don't know the answer, just say that you don't know, dont try to make up an answer.
+Do not start answering by saying the context... just give the concrete answer.
 <context>
 {context}
 </context>
