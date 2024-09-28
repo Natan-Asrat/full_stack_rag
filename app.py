@@ -82,10 +82,12 @@ if 'temp_dir' not in st.session_state:
     st.session_state.temp_dir = tempfile.TemporaryDirectory()
 if 'log_messages' not in st.session_state:
     st.session_state.log_messages = []
+col1, col2 = st.columns([3, 1])  # Adjust column sizes as needed
 
 def log_message(message):
     st.session_state.log_messages.append(message)
-    display_logs()
+    with col2:
+        display_logs() 
 
 # Function to display logs
 def display_logs():
@@ -329,8 +331,8 @@ if st.sidebar.button("Process Files"):
                         metadata_dict[id_key] = doc_uuid
                         doc.metadata = metadata_dict
 
-
-                st.write(f"Loaded {st.session_state.counts[ext]} {ext} documents with {len(docs)} elements.")
+                with col1:
+                    st.write(f"Loaded {st.session_state.counts[ext]} {ext} documents with {len(docs)} elements.")
                 log_message(f"Loaded {len(docs)} {ext} documents.")
 
                 if ext == "PDF":
@@ -395,8 +397,8 @@ if st.session_state.docstore_elements:
                 retrieval_chain_multi_vector = create_retrieval_chain(st.session_state.retriever_multi_vector_only, docs_chain)
                 # response = retrieval_chain_multi_vector.invoke({"context": docs_retrieved_multi_vector, "input": query})
                 response = retrieval_chain_multi_vector.invoke({"context": unique_docs, "input": query})
-
-                st.write(response['answer'])
+                with col1:
+                    st.write(response['answer'])
                 log_message("Response generated and displayed.")
 
         else:
