@@ -277,7 +277,7 @@ def initialize_vectorstore():
         id_key=id_key
     )
     st.session_state.retriever_multi_query_only = MultiQueryRetriever.from_llm(
-        retriever=st.session_state.st.session_state.retriever_db,
+        retriever=st.session_state.retriever_db,
         llm=llm
     )
     st.session_state.retriever_multi_query_and_multi_vector = MultiQueryRetriever.from_llm(
