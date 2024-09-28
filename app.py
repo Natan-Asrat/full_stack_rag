@@ -251,18 +251,18 @@ def extract_files(doc, extraction_type, pdf=False):
                 for sentence in p.sentences:
                     chunk_summary_document = Document(page_content=sentence, metadata={id_key: unique_id})
                     st.session_state.vectorstore_elements.append(chunk_summary_document)
-            log_message(f"Extracted propositions for document ID: {unique_id}")
+            # log_message(f"Extracted propositions for document ID: {unique_id}")
 
         elif extraction_type == "summary":
             chunk_summary = summarize_chain.run([split])
             chunk_summary_document = Document(page_content=chunk_summary, metadata={id_key: unique_id})
             st.session_state.vectorstore_elements.append(chunk_summary_document)
-            log_message(f"Generated summary for document ID: {unique_id}")
+            # log_message(f"Generated summary for document ID: {unique_id}")
 
         elif extraction_type == "basic":
             chunk_document = Document(page_content=split.page_content, metadata={id_key: unique_id})
             st.session_state.vectorstore_elements.append(chunk_document)
-            log_message(f"Basic extraction for document ID: {unique_id}")
+            # log_message(f"Basic extraction for document ID: {unique_id}")
 
 # Vector store initialization after file extraction
 # def initialize_vectorstore():
@@ -330,6 +330,7 @@ if st.sidebar.button("Process Files"):
     if uploaded_files:
         with st.spinner('Processing files...'):
             results = process_uploaded_files(uploaded_files)
+            log_message(f"Starting extraction...")
             for ext, docs in results:
                 uuids = [str(uuid.uuid4()) for _ in docs]  # Generate UUIDs
                 for doc, doc_uuid in zip(docs, uuids):
