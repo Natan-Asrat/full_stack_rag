@@ -331,6 +331,8 @@ if st.session_state.docstore_elements:
                     relevant_queries = st.session_state.retriever_multi_query_only.get_relevant_documents(query)
             else:
                 relevant_queries = [query]
+            if isinstance(relevant_queries, list) and all(isinstance(i, list) for i in relevant_queries):
+                relevant_queries = [item for sublist in relevant_queries for item in sublist]
 
             if use_compression:
                 # Use compression retriever
