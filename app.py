@@ -328,7 +328,7 @@ if st.session_state.docstore_elements:
             relevant_queries = []
             if enable_multi_query:
                 with st.spinner('Analyzing your query for optimal results, please hold on...'):
-                    relevant_queries = st.session_state.retriever_multi_query_only.get_relevant_documents(query)
+                    relevant_queries = [st.session_state.retriever_multi_query_only.generate_queries(query)]
             else:
                 relevant_queries = [query]
             if isinstance(relevant_queries, list) and all(isinstance(i, list) for i in relevant_queries):
