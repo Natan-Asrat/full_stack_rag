@@ -80,8 +80,18 @@ if 'db_multi_vector' not in st.session_state:
 
 if 'temp_dir' not in st.session_state:  
     st.session_state.temp_dir = tempfile.TemporaryDirectory()
+if 'log_messages' not in st.session_state:
+    st.session_state.log_messages = []
 
+def log_message(message):
+    st.session_state.log_messages.append(message)
 
+# Function to display logs
+def display_logs():
+    if st.session_state.log_messages:
+        st.write("### Logs")
+        for msg in st.session_state.log_messages:
+            st.write(f"- {msg}")
 
 # Initialize language model
 llm = ChatGroq()
@@ -165,11 +175,14 @@ def process_uploaded_files(uploaded_files):
                 
                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                     zip_ref.extractall(temp_dir)
+                log_message(f"Extracted {uploaded_file.name} to temporary directory.")
+
             else:
                 # Save non-ZIP files directly to temp
                 file_path = os.path.join(temp_dir, uploaded_file.name)
                 with open(file_path, 'wb') as f:
                     f.write(uploaded_file.getbuffer())
+                log_message(f"Uploaded file: {uploaded_file.name}")
 
         # Process files
         for uploaded_file in uploaded_files:
@@ -196,9 +209,10 @@ def process_uploaded_files(uploaded_files):
     
     return results
 def get_propositions(text):
-    
+    log_message("Proposition input: " + text)  # Log the runnable output
+
     runnable_output = extraction_runnable.invoke({'input': text}).content
-    print("Runnable Output:", runnable_output)  # Debugging output
+    log_message("Proposition Output: " + str(runnable_output))  # Log the runnable output
     propositions = extraction_chain.run(runnable_output)
     return propositions
 # Function to extract files
@@ -225,14 +239,18 @@ def extract_files(doc, extraction_type, pdf=False):
                 for sentence in p.sentences:
                     chunk_summary_document = Document(page_content=sentence, metadata={id_key: unique_id})
                     st.session_state.vectorstore_elements.append(chunk_summary_document)
-        
+            log_message(f"Extracted propositions for document ID: {unique_id}")
+
         elif extraction_type == "summary":
             chunk_summary = summarize_chain.run([split])
             chunk_summary_document = Document(page_content=chunk_summary, metadata={id_key: unique_id})
             st.session_state.vectorstore_elements.append(chunk_summary_document)
+            log_message(f"Generated summary for document ID: {unique_id}")
+
         elif extraction_type == "basic":
             chunk_document = Document(page_content=split.page_content, metadata={id_key: unique_id})
             st.session_state.vectorstore_elements.append(chunk_document)
+            log_message(f"Basic extraction for document ID: {unique_id}")
 
 # Vector store initialization after file extraction
 # def initialize_vectorstore():
@@ -266,9 +284,13 @@ def initialize_vectorstore():
     if os.path.exists(db_path):
         # st.session_state.db_multi_vector = Chroma.load_from_path(db_path, embedding_model)
         st.session_state.db_multi_vector = Chroma(persist_directory=db_path, embedding_function=embedding_model)
+        log_message(f"Loaded existing vector store from {db_path}.")
+
     else:
         st.session_state.db_multi_vector = Chroma.from_documents(st.session_state.vectorstore_elements, embedding_model, persist_directory=db_path)
         st.session_state.db_multi_vector.persist()  # Save to temporary file
+        log_message("Created a new vector store.")
+
     st.session_state.retriever_db = st.session_state.db_multi_vector.as_retriever()
     st.session_state.retriever_multi_vector_only = MultiVectorRetriever(
         vectorstore=st.session_state.db_multi_vector,
@@ -284,6 +306,7 @@ def initialize_vectorstore():
         llm=llm
     )
     st.session_state.retriever_multi_vector_only.docstore.mset([(doc.metadata[id_key], doc) for doc in st.session_state.docstore_elements])
+    log_message("Initialized retrievers for multi-query and multi-vector retrieval.")
 
 
 # Streamlit sidebar and query section
@@ -307,13 +330,16 @@ if st.sidebar.button("Process Files"):
 
 
                 st.write(f"Loaded {st.session_state.counts[ext]} {ext} documents with {len(docs)} elements.")
-                
+                log_message(f"Loaded {len(docs)} {ext} documents.")
+
                 if ext == "PDF":
                     extract_files(docs, extraction_type, pdf=True)
                 else:
                     extract_files(docs, extraction_type)
             initialize_vectorstore()  # Initialize vector store after files are processed
             st.sidebar.success("Files processed. You can now query the documents.")
+            log_message("File processing completed and vector store initialized.")
+
     else:
         st.sidebar.error("Please upload at least one file.")
 
@@ -325,6 +351,8 @@ if st.session_state.docstore_elements:
     enable_multi_vector = st.checkbox("Enable Multi Vector")
     if st.button("Submit Query"):
         if query:
+            log_message(f"Query submitted: {query}")
+
             if use_compression:
                 # Use compression retriever
                 with st.spinner('Compressing relevant documents, please wait...'):
@@ -344,6 +372,8 @@ if st.session_state.docstore_elements:
                     )
                     with st.spinner('Retrieving relevant documents, please hold on...'):
                         unique_docs = compression_retriever.get_relevant_documents(query)
+                    log_message(f"Retrieved {len(unique_docs)} unique documents using compression.")
+
                     # docs_retrieved_multi_vector = compression_retriever.get_relevant_documents(query)
             else:
                 with st.spinner('Retrieving relevant documents, please hold on...'):
@@ -355,7 +385,8 @@ if st.session_state.docstore_elements:
                             unique_docs = st.session_state.retriever_multi_query_only.get_relevant_documents(query)      
                     elif enable_multi_vector:
                         unique_docs = st.session_state.retriever_multi_vector.get_relevant_documents(query)
-                    
+                    log_message(f"Retrieved {len(unique_docs)} unique documents without compression.")
+
                     # Without compression
                     # docs_retrieved_multi_vector = st.session_state.retriever_multi_vector.get_relevant_documents(query)
             with st.spinner('Generating response, this may take a moment...'):
@@ -365,5 +396,9 @@ if st.session_state.docstore_elements:
                 response = retrieval_chain_multi_vector.invoke({"context": unique_docs, "input": query})
 
                 st.write(response['answer'])
+                log_message("Response generated and displayed.")
+
         else:
             st.error("Please enter a query.")
+            log_message("Query submission failed: No query entered.")
+
