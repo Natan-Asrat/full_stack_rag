@@ -345,63 +345,63 @@ if st.sidebar.button("Process Files"):
 
     else:
         st.sidebar.error("Please upload at least one file.")
-
+with col1:
 # User input for querying
-if st.session_state.docstore_elements:
-    query = st.text_input("Enter your query:")
-    use_compression = st.checkbox("Enable Compression")
-    enable_multi_query = st.checkbox("Enable Multi Query")
-    enable_multi_vector = st.checkbox("Enable Multi Vector")
-    if st.button("Submit Query"):
-        if query:
-            log_message(f"Query submitted: {query}")
+    if st.session_state.docstore_elements:
+        query = st.text_input("Enter your query:")
+        use_compression = st.checkbox("Enable Compression")
+        enable_multi_query = st.checkbox("Enable Multi Query")
+        enable_multi_vector = st.checkbox("Enable Multi Vector")
+        if st.button("Submit Query"):
+            if query:
+                log_message(f"Query submitted: {query}")
 
-            if use_compression:
-                # Use compression retriever
-                with st.spinner('Compressing relevant documents, please wait...'):
-                    compressor = LLMChainExtractor.from_llm(llm)
-                    retriever = None
-                    if enable_multi_query and enable_multi_vector:
-                        retriever = st.session_state.retriever_multi_query_and_multi_vector
-                    elif enable_multi_query: 
-                        retriever = st.session_state.retriever_multi_query_only
-                    elif enable_multi_vector:
-                        retriever = st.session_state.retriever_multi_vector_only
-                    else:
-                        retriever = st.session_state.retriever_db
-                    compression_retriever = ContextualCompressionRetriever(
-                        base_compressor=compressor,
-                        base_retriever=retriever
-                    )
+                if use_compression:
+                    # Use compression retriever
+                    with st.spinner('Compressing relevant documents, please wait...'):
+                        compressor = LLMChainExtractor.from_llm(llm)
+                        retriever = None
+                        if enable_multi_query and enable_multi_vector:
+                            retriever = st.session_state.retriever_multi_query_and_multi_vector
+                        elif enable_multi_query: 
+                            retriever = st.session_state.retriever_multi_query_only
+                        elif enable_multi_vector:
+                            retriever = st.session_state.retriever_multi_vector_only
+                        else:
+                            retriever = st.session_state.retriever_db
+                        compression_retriever = ContextualCompressionRetriever(
+                            base_compressor=compressor,
+                            base_retriever=retriever
+                        )
+                        with st.spinner('Retrieving relevant documents, please hold on...'):
+                            unique_docs = compression_retriever.get_relevant_documents(query)
+                        log_message(f"Retrieved {len(unique_docs)} unique documents using compression.")
+
+                        # docs_retrieved_multi_vector = compression_retriever.get_relevant_documents(query)
+                else:
                     with st.spinner('Retrieving relevant documents, please hold on...'):
-                        unique_docs = compression_retriever.get_relevant_documents(query)
-                    log_message(f"Retrieved {len(unique_docs)} unique documents using compression.")
+                        if enable_multi_query and enable_multi_vector: 
+                            with st.spinner('Analyzing your query for optimal results, please hold on...'):
+                                unique_docs = st.session_state.retriever_multi_query_and_multi_vector.get_relevant_documents(query)
+                        elif enable_multi_query:
+                            with st.spinner('Analyzing your query for optimal results, please hold on...'):
+                                unique_docs = st.session_state.retriever_multi_query_only.get_relevant_documents(query)      
+                        elif enable_multi_vector:
+                            unique_docs = st.session_state.retriever_multi_vector.get_relevant_documents(query)
+                        log_message(f"Retrieved {len(unique_docs)} unique documents without compression.")
 
-                    # docs_retrieved_multi_vector = compression_retriever.get_relevant_documents(query)
+                        # Without compression
+                        # docs_retrieved_multi_vector = st.session_state.retriever_multi_vector.get_relevant_documents(query)
+                with st.spinner('Generating response, this may take a moment...'):
+                    docs_chain = create_stuff_documents_chain(ChatGroq(), PROMPT)
+                    retrieval_chain_multi_vector = create_retrieval_chain(st.session_state.retriever_multi_vector_only, docs_chain)
+                    # response = retrieval_chain_multi_vector.invoke({"context": docs_retrieved_multi_vector, "input": query})
+                    response = retrieval_chain_multi_vector.invoke({"context": unique_docs, "input": query})
+                    with col1:
+                        st.write(response['answer'])
+                    log_message("Response generated and displayed.")
+
             else:
-                with st.spinner('Retrieving relevant documents, please hold on...'):
-                    if enable_multi_query and enable_multi_vector: 
-                        with st.spinner('Analyzing your query for optimal results, please hold on...'):
-                            unique_docs = st.session_state.retriever_multi_query_and_multi_vector.get_relevant_documents(query)
-                    elif enable_multi_query:
-                        with st.spinner('Analyzing your query for optimal results, please hold on...'):
-                            unique_docs = st.session_state.retriever_multi_query_only.get_relevant_documents(query)      
-                    elif enable_multi_vector:
-                        unique_docs = st.session_state.retriever_multi_vector.get_relevant_documents(query)
-                    log_message(f"Retrieved {len(unique_docs)} unique documents without compression.")
-
-                    # Without compression
-                    # docs_retrieved_multi_vector = st.session_state.retriever_multi_vector.get_relevant_documents(query)
-            with st.spinner('Generating response, this may take a moment...'):
-                docs_chain = create_stuff_documents_chain(ChatGroq(), PROMPT)
-                retrieval_chain_multi_vector = create_retrieval_chain(st.session_state.retriever_multi_vector_only, docs_chain)
-                # response = retrieval_chain_multi_vector.invoke({"context": docs_retrieved_multi_vector, "input": query})
-                response = retrieval_chain_multi_vector.invoke({"context": unique_docs, "input": query})
-                with col1:
-                    st.write(response['answer'])
-                log_message("Response generated and displayed.")
-
-        else:
-            st.error("Please enter a query.")
-            log_message("Query submission failed: No query entered.")
+                st.error("Please enter a query.")
+                log_message("Query submission failed: No query entered.")
 
