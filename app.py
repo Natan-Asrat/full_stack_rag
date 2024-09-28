@@ -87,7 +87,8 @@ st.markdown("""
     <style>
         [data-testid="column"]:nth-child(2){
             background-color: lightgrey;
-        }
+            height: 100vh;
+            padding: 20% 10%;        }
     </style>
     """, unsafe_allow_html=True
 )
