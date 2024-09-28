@@ -87,23 +87,24 @@ col1, col2 = st.columns([3, 1])  # Adjust column sizes as needed
 with col2:
     st.write("### Logs")
 def log_message(message):
-    st.session_state.log_messages.append(message)
+    st.session_state.log_messages.insert(0, message)
     with col2:
         # st.write(f"{message}")
-        st.markdown(
-            f"""
-            <span style="color: green; font-size: 14px;">{message}</span>
-            """,
-            unsafe_allow_html=True
-        )
+        display_logs
         # display_logs() 
 
 # Function to display logs
 def display_logs():
     if st.session_state.log_messages:
-        st.write("### Logs")
+        log_placeholder = st.empty()
+
         for msg in st.session_state.log_messages:
-            st.write(f"- {msg}")
+            log_placeholder.markdown(
+                f"""
+                <span style="color: green; font-size: 14px;">{msg}</span>
+                """,
+                unsafe_allow_html=True
+            )
 
 # Initialize language model
 llm = ChatGroq()
