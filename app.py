@@ -327,9 +327,9 @@ if st.session_state.docstore_elements:
     if st.button("Submit Query"):
         if query:
             relevant_queries = []
-
             if enable_multi_query:
-                relevant_queries = st.session_state.retriever_multi_query_only.get_relevant_queries(query)
+                with st.spinner('Analyzing your query for optimal results, please hold on...'):
+                    relevant_queries = st.session_state.retriever_multi_query_only.get_relevant_queries(query)
             else:
                 relevant_queries = [query]
 
