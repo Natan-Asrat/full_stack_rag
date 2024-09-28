@@ -30,8 +30,6 @@ from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain.prompts import PromptTemplate
 from langchain_community.vectorstores import Chroma
 from dotenv import load_dotenv
-from streamlit_extras import stylable_container
-
 # Initial setup
 load_dotenv()
 import sys
@@ -85,8 +83,16 @@ if 'temp_dir' not in st.session_state:
 if 'log_messages' not in st.session_state:
     st.session_state.log_messages = []
 col1, col2 = st.columns([3, 1])  # Adjust column sizes as needed
-with stylable_container(col2, styles={"background-color": "red"}):
-   st.write("### Logs")
+st.markdown("""
+    <style>
+        [data-testid="column"]:nth-child(2){
+            background-color: lightgrey;
+        }
+    </style>
+    """, unsafe_allow_html=True
+)
+with col2:
+    st.write("### Logs")
 def log_message(message):
     st.session_state.log_messages.append(message)
     with col2:
