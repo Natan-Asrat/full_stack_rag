@@ -85,6 +85,7 @@ if 'log_messages' not in st.session_state:
 
 def log_message(message):
     st.session_state.log_messages.append(message)
+    display_logs()
 
 # Function to display logs
 def display_logs():
