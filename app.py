@@ -83,11 +83,13 @@ if 'temp_dir' not in st.session_state:
 if 'log_messages' not in st.session_state:
     st.session_state.log_messages = []
 col1, col2 = st.columns([3, 1])  # Adjust column sizes as needed
-
+with col2:
+    st.write("### Logs")
 def log_message(message):
     st.session_state.log_messages.append(message)
     with col2:
-        display_logs() 
+        st.write(f"- {message}")
+        # display_logs() 
 
 # Function to display logs
 def display_logs():
