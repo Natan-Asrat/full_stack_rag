@@ -90,7 +90,7 @@ def log_message(message):
     st.session_state.log_messages.insert(0, message)
     with col2:
         # st.write(f"{message}")
-        display_logs
+        display_logs()
         # display_logs() 
 
 # Function to display logs
