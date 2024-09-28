@@ -92,7 +92,7 @@ def log_message(message):
         # st.write(f"{message}")
         st.markdown(
             f"""
-            <span style="color: green; font-size: 12px;">{message}</span>
+            <span style="color: green; font-size: 14px;">{message}</span>
             """,
             unsafe_allow_html=True
         )
