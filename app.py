@@ -83,27 +83,18 @@ if 'temp_dir' not in st.session_state:
 if 'log_messages' not in st.session_state:
     st.session_state.log_messages = []
 col1, col2 = st.columns([3, 1])  # Adjust column sizes as needed
-st.markdown("""
-    <style>
-        [data-testid="column"]:nth-child(2){
-            background-color: lightgrey;
-            height: 100vh;
-            padding: 20% 10%;        }
-    </style>
-    """, unsafe_allow_html=True
-)
+
 with col2:
     st.write("### Logs")
 def log_message(message):
     st.session_state.log_messages.append(message)
     with col2:
-        # st.write(f"- {message}")
+        # st.write(f"{message}")
         st.markdown(
             f"""
-            ```
-            {message}
-            ```
-            """
+            <span style="color: green; font-size: 8px;">{message}</span>
+            """,
+            unsafe_allow_html=True
         )
         # display_logs() 
 
