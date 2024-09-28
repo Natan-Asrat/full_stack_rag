@@ -83,7 +83,8 @@ if 'temp_dir' not in st.session_state:
 if 'log_messages' not in st.session_state:
     st.session_state.log_messages = []
 col1, col2 = st.columns([3, 1])  # Adjust column sizes as needed
-
+with col1:
+    select_files_holder = st.write("Upload files on the left!")
 with col2:
     st.write("### Logs")
 def log_message(message):
@@ -176,6 +177,8 @@ def process_pdf(file_path):
 def process_uploaded_files(uploaded_files):
     # global counts
     results = []
+    with col1:
+        select_files_holder = st.empty()
     
     with tempfile.TemporaryDirectory() as temp_dir:
         for uploaded_file in uploaded_files:
