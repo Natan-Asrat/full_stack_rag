@@ -74,8 +74,7 @@ if 'retriever_multi_vector_only' not in st.session_state:
     st.session_state.retriever_multi_vector_only = None
 if 'retriever_multi_query_and_multi_vector' not in st.session_state:
     st.session_state.retriever_multi_query_and_multi_vector = None
-if 'retriever_multi_vector' not in st.session_state:
-    st.session_state.retriever_multi_vector = None
+
 if 'db_multi_vector' not in st.session_state:
     st.session_state.db_multi_vector = None
 
@@ -284,7 +283,7 @@ def initialize_vectorstore():
         retriever=st.session_state.retriever_multi_vector_only,
         llm=llm
     )
-    st.session_state.retriever_multi_vector.docstore.mset([(doc.metadata[id_key], doc) for doc in st.session_state.docstore_elements])
+    st.session_state.retriever_multi_vector_only.docstore.mset([(doc.metadata[id_key], doc) for doc in st.session_state.docstore_elements])
 
 
 # Streamlit sidebar and query section
@@ -355,7 +354,7 @@ if st.session_state.docstore_elements:
                     # docs_retrieved_multi_vector = st.session_state.retriever_multi_vector.get_relevant_documents(query)
             with st.spinner('Generating response, this may take a moment...'):
                 docs_chain = create_stuff_documents_chain(ChatGroq(), PROMPT)
-                retrieval_chain_multi_vector = create_retrieval_chain(st.session_state.retriever_multi_vector, docs_chain)
+                retrieval_chain_multi_vector = create_retrieval_chain(st.session_state.retriever_multi_vector_only, docs_chain)
                 # response = retrieval_chain_multi_vector.invoke({"context": docs_retrieved_multi_vector, "input": query})
                 response = retrieval_chain_multi_vector.invoke({"context": unique_docs, "input": query})
 
