@@ -325,33 +325,37 @@ if st.session_state.docstore_elements:
     enable_multi_vector = st.checkbox("Enable Multi Vector")
     if st.button("Submit Query"):
         if query:
-            relevant_queries = []
-            if enable_multi_query:
-                with st.spinner('Analyzing your query for optimal results, please hold on...'):
-                    relevant_queries = [st.session_state.retriever_multi_query_only.generate_queries(query)]
-            else:
-                relevant_queries = [query]
-            if isinstance(relevant_queries, list) and all(isinstance(i, list) for i in relevant_queries):
-                relevant_queries = [item for sublist in relevant_queries for item in sublist]
-
             if use_compression:
                 # Use compression retriever
                 with st.spinner('Compressing relevant documents, please wait...'):
                     compressor = LLMChainExtractor.from_llm(llm)
+                    retriever = None
+                    if enable_multi_query and enable_multi_vector:
+                        retriever = st.session_state.retriever_multi_query_and_multi_vector
+                    elif enable_multi_query: 
+                        retriever = st.session_state.retriever_multi_query_only
+                    elif enable_multi_vector:
+                        retriever = st.session_state.retriever_multi_vector_only
+                    else:
+                        retriever = st.session_state.retriever_db
                     compression_retriever = ContextualCompressionRetriever(
                         base_compressor=compressor,
-                        base_retriever=st.session_state.retriever_multi_vector_only if enable_multi_vector else st.session_state.retriever_db
+                        base_retriever=retriever
                     )
-                    unique_docs = compression_retriever.get_relevant_documents(relevant_queries)
+                    with st.spinner('Retrieving relevant documents, please hold on...'):
+                        unique_docs = compression_retriever.get_relevant_documents(query)
                     # docs_retrieved_multi_vector = compression_retriever.get_relevant_documents(query)
             else:
-               
                 with st.spinner('Retrieving relevant documents, please hold on...'):
-                    if enable_multi_vector:
-                        unique_docs = st.session_state.retriever_multi_vector_only.get_relevant_documents(relevant_queries)
-                    else:
-                        unique_docs = st.session_state.retriever_db.get_relevant_documents(relevant_queries)
-
+                    if enable_multi_query and enable_multi_vector: 
+                        with st.spinner('Analyzing your query for optimal results, please hold on...'):
+                            unique_docs = st.session_state.retriever_multi_query_and_multi_vector.get_relevant_documents(query)
+                    elif enable_multi_query:
+                        with st.spinner('Analyzing your query for optimal results, please hold on...'):
+                            unique_docs = st.session_state.retriever_multi_query_only.get_relevant_documents(query)      
+                    elif enable_multi_vector:
+                        unique_docs = st.session_state.retriever_multi_vector.get_relevant_documents(query)
+                    
                     # Without compression
                     # docs_retrieved_multi_vector = st.session_state.retriever_multi_vector.get_relevant_documents(query)
             with st.spinner('Generating response, this may take a moment...'):
