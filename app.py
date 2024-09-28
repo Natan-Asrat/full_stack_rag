@@ -96,7 +96,14 @@ with col2:
 def log_message(message):
     st.session_state.log_messages.append(message)
     with col2:
-        st.write(f"- {message}")
+        # st.write(f"- {message}")
+        st.markdown(
+            f"""
+            ```
+            {message}
+            ```
+            """
+        )
         # display_logs() 
 
 # Function to display logs
