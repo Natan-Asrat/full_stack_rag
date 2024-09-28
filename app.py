@@ -309,12 +309,13 @@ if st.session_state.docstore_elements:
             
             if use_compression:
                 # Use compression retriever
-                compressor = LLMChainExtractor.from_llm(llm)
-                compression_retriever = ContextualCompressionRetriever(
-                    base_compressor=compressor,
-                    base_retriever=st.session_state.retriever_multi_vector
-                )
-                docs_retrieved_multi_vector = compression_retriever.get_relevant_documents(query)
+                with st.spinner('Compressing relevant docs...'):
+                    compressor = LLMChainExtractor.from_llm(llm)
+                    compression_retriever = ContextualCompressionRetriever(
+                        base_compressor=compressor,
+                        base_retriever=st.session_state.retriever_multi_vector
+                    )
+                    docs_retrieved_multi_vector = compression_retriever.get_relevant_documents(query)
             else:
                 # Without compression
                 docs_retrieved_multi_vector = st.session_state.retriever_multi_vector.get_relevant_documents(query)
