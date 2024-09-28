@@ -321,7 +321,7 @@ if st.session_state.docstore_elements:
                 with st.spinner('Retrieving relevant documents, please hold on...'):
                     # Without compression
                     docs_retrieved_multi_vector = st.session_state.retriever_multi_vector.get_relevant_documents(query)
-            with st.spinner('Generating response from Groq, this may take a moment...'):
+            with st.spinner('Generating response, this may take a moment...'):
                 docs_chain = create_stuff_documents_chain(ChatGroq(), PROMPT)
                 retrieval_chain_multi_vector = create_retrieval_chain(st.session_state.retriever_multi_vector, docs_chain)
                 response = retrieval_chain_multi_vector.invoke({"context": docs_retrieved_multi_vector, "input": query})
