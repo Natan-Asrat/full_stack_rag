@@ -32,7 +32,7 @@ To run this project, ensure you have the following installed:
 1. Clone the repository:
     ```bash
     git clone https://github.com/Natan-Asrat/full_stack_rag.git
-    cd rag-project
+    cd full_stack_rag
     ```
 
 2. Activate virtual environment: 
