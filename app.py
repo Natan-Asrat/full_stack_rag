@@ -314,15 +314,14 @@ if st.session_state.docstore_elements:
                     base_compressor=compressor,
                     base_retriever=st.session_state.retriever_multi_vector
                 )
-                compressed_docs = compression_retriever.get_relevant_documents(query)
-                response = create_stuff_documents_chain(ChatGroq(), PROMPT).run(compressed_docs)
+                docs_retrieved_multi_vector = compression_retriever.get_relevant_documents(query)
             else:
                 # Without compression
                 docs_retrieved_multi_vector = st.session_state.retriever_multi_vector.get_relevant_documents(query)
                 
-                docs_chain = create_stuff_documents_chain(ChatGroq(), PROMPT)
-                retrieval_chain_multi_vector = create_retrieval_chain(st.session_state.retriever_multi_vector, docs_chain)
-                response = retrieval_chain_multi_vector.invoke({"context": docs_retrieved_multi_vector, "input": query})
+            docs_chain = create_stuff_documents_chain(ChatGroq(), PROMPT)
+            retrieval_chain_multi_vector = create_retrieval_chain(st.session_state.retriever_multi_vector, docs_chain)
+            response = retrieval_chain_multi_vector.invoke({"context": docs_retrieved_multi_vector, "input": query})
             st.write(response['answer'])
         else:
             st.error("Please enter a query.")
