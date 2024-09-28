@@ -37,7 +37,7 @@ package = __import__('pysqlite3')
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 
-st.header("Full Stack RAG by Natan.")
+st.header("Full Stack RAG by Natan")
 prompt_template = """
 Use the following context to answer the question at the end. If you don't know the answer, just say that you don't know, dont try to make up an answer.
 <context>
