@@ -309,7 +309,7 @@ if st.session_state.docstore_elements:
             
             if use_compression:
                 # Use compression retriever
-                with st.spinner('Compressing relevant docs...'):
+                with st.spinner('Compressing relevant documents, please wait...'):
                     compressor = LLMChainExtractor.from_llm(llm)
                     compression_retriever = ContextualCompressionRetriever(
                         base_compressor=compressor,
@@ -317,12 +317,14 @@ if st.session_state.docstore_elements:
                     )
                     docs_retrieved_multi_vector = compression_retriever.get_relevant_documents(query)
             else:
-                # Without compression
-                docs_retrieved_multi_vector = st.session_state.retriever_multi_vector.get_relevant_documents(query)
-                
-            docs_chain = create_stuff_documents_chain(ChatGroq(), PROMPT)
-            retrieval_chain_multi_vector = create_retrieval_chain(st.session_state.retriever_multi_vector, docs_chain)
-            response = retrieval_chain_multi_vector.invoke({"context": docs_retrieved_multi_vector, "input": query})
-            st.write(response['answer'])
+               
+                with st.spinner('Retrieving relevant documents, please hold on...'):
+                    # Without compression
+                    docs_retrieved_multi_vector = st.session_state.retriever_multi_vector.get_relevant_documents(query)
+            with st.spinner('Generating response from Groq, this may take a moment...'):
+                docs_chain = create_stuff_documents_chain(ChatGroq(), PROMPT)
+                retrieval_chain_multi_vector = create_retrieval_chain(st.session_state.retriever_multi_vector, docs_chain)
+                response = retrieval_chain_multi_vector.invoke({"context": docs_retrieved_multi_vector, "input": query})
+                st.write(response['answer'])
         else:
             st.error("Please enter a query.")
