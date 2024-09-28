@@ -16,17 +16,6 @@ View Live Site [here](https://full-stack-rag.streamlit.app/)
 - **Streamlit Interface**: Provides a user-friendly interface for query inputs and results.
 - **Logging**: Logs all processes for monitoring and debugging.
 
-## Prerequisites
-
-To run this project, ensure you have the following installed:
-
-- Python 3.8+
-- Streamlit
-- Langchain
-- HuggingFace Transformers
-- FAISS (for vector storage)
-- PyPDF2 (for PDF processing)
-
 ## Setup
 
 1. Clone the repository:
