@@ -43,7 +43,11 @@ To run this project, ensure you have the following installed:
     ```bash 
     pip install -r requirements.txt 
     ```
-4. Create environment variables `LANGCHAIN_API_KEY` and `GROQ_API_KEY`. You can get your langchain api key from [here](https://smith.langchain.com/), and your groq api key from [here](https://console.groq.com/keys).
+4. Create environment variables 
+- `OCR_AGENT=unstructured.partition.utils.ocr_models.tesseract_ocr.OCRAgentTesseract` ,  
+- `LANGCHAIN_API_KEY` and 
+- `GROQ_API_KEY`. 
+- You can get your langchain api key from [here](https://smith.langchain.com/), and your groq api key from [here](https://console.groq.com/keys).
 
 
 ## Running the Application
