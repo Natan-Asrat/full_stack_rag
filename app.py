@@ -341,9 +341,9 @@ if st.sidebar.button("Process Files"):
                         metadata_dict[id_key] = doc_uuid
                         doc.metadata = metadata_dict
 
-                with col1:
-                    st.write(f"Loaded {st.session_state.counts[ext]} {ext} documents with {len(docs)} elements.")
-                log_message(f"Loaded {len(docs)} {ext} documents.")
+                # with col1:
+                #     st.write(f"Loaded {st.session_state.counts[ext]} {ext} documents with {len(docs)} elements.")
+                log_message(f"Loaded {st.session_state.counts[ext]} {ext} documents with {len(docs)} elements.")
 
                 if ext == "PDF":
                     extract_files(docs, extraction_type, pdf=True)
